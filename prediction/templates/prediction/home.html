@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự đoán độ ẩm</title>
+    {% load static %}
+    <style>
+        /* Tổng quan */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            height: 100vh;
+            background-color: #f4f7fa;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Bên trái: Bản đồ */
+        .map-container {
+            width: 35%;
+            height: 100%;
+            background-color: #f9c1c1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 2px solid #ccc;
+        }
+
+        /* Bên phải: Form dự đoán */
+        .form-container {
+            width: 65%;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+            margin: 20px;
+        }
+
+        h1 {
+            color: #1de466;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px 0;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .form-card label {
+            font-weight: bold;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .form-card input, .form-card select, .form-card button {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .form-card button {
+            background-color: #17edb8;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .form-card button:hover {
+            background-color: #7eb70c;
+        }
+
+        .form-card .error {
+            background-color: #f9c1c1;
+            color: #c30e0e;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .form-card .loading {
+            background-color: #f9e3a1;
+            color: #c37b01;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        #result {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: none;
+            background-color: #e9f7e9;
+        }
+
+        .form-container a {
+            text-decoration: none;
+            margin-top: 30px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            display: block;
+            width: 200px;
+            text-transform: uppercase;
+            transition: background-color 0.3s ease;
+        }
+
+        .form-container a:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Bên trái: Bản đồ -->
+        <div class="map-container">
+            {{ map_html|safe }}
+        </div>
+
+        <!-- Bên phải: Form dự đoán -->
+        <div class="form-container">
+            <h1>DỰ ĐOÁN ĐỘ ẨM VIỆT NAM 🌦️</h1>
+
+            <!-- Form Card -->
+            <div class="form-card">
+                <form id="predictionForm" action="{% url 'predict' %}" method="POST">
+                    {% csrf_token %}
+                    <label for="province">Chọn tỉnh 🏙️:</label>
+                    <select name="province" id="province">
+                        {% for province in provinces %}
+                            <option value="{{ province }}">{{ province }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <label for="model_type">Chọn mô hình 🤖:</label>
+                    <select name="model_type" id="model_type" onchange="toggleFields()">
+                        <option value="ARIMA">ARIMA🕛</option>
+                        <option value="Linear Regression">Linear Regression📉</option>
+                        <option value="Random Forest">Random Forest🌳</option>
+                    </select>
+
+                    <div id="date-field">
+                        <label for="date">Chọn ngày dự đoán ⌛:</label>
+                        <input type="date" name="date" id="date" min="2021-06-18" max="2021-06-25">
+                    </div>
+
+                    <div id="extra-fields">
+                        <label for="cloud">Mây(%) 🌨️:</label>
+                        <input type="number" name="cloud" id="cloud" step="any">
+
+                        <label for="max">Nhiệt độ (max) 🌡️☀️:</label>
+                        <input type="number" name="max" id="max" step="any">
+
+                        <label for="rain">Lượng mưa (mm) 🌧️:</label>
+                        <input type="number" name="rain" id="rain" step="any">
+                    </div>
+
+                    <button type="button" onclick="makePrediction()">Dự đoán 🌧️</button>
+                </form>
+
+                <div id="loading" class="loading">⏳ Đang xử lý...</div>
+                <div id="result"></div>
+            </div>
+
+            <!-- Dashboard Link -->
+            <a href="{% url 'dashboard' %}">Đi đến Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        function toggleFields() {
+            const modelType = document.getElementById('model_type').value;
+            const extraFields = document.getElementById('extra-fields');
+
+            // Luôn hiển thị ngày, ẩn hoặc hiện trường khác dựa vào mô hình
+            extraFields.style.display = modelType === 'ARIMA' ? 'none' : 'block';
+        }
+
+        window.onload = toggleFields;
+
+        function makePrediction() {
+            const form = document.getElementById('predictionForm');
+            const formData = new FormData(form);
+            const loadingDiv = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': form.elements['csrfmiddlewaretoken'].value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                resultDiv.style.display = 'block';
+                if (data.result) {
+                    resultDiv.className = '';
+                    resultDiv.innerHTML = `✅ <strong>Kết quả:</strong> ${data.result}`;
+                } else {
+                    resultDiv.className = 'error';
+                    resultDiv.innerHTML = `❌ <strong>Lỗi:</strong> ${data.error}`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

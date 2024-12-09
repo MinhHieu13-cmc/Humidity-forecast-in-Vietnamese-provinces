@@ -1,0 +1,293 @@
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+    var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+    (function(){
+    var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+    s1.async=true;
+    s1.src='https://embed.tawk.to/6738da072480f5b4f59f0e37/1icr17bea';
+    s1.charset='UTF-8';
+    s1.setAttribute('crossorigin','*');
+    s0.parentNode.insertBefore(s1,s0);
+    })();
+    </script>
+    <!--End of Tawk.to Script-->
+    
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Dashboard</title>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            /* Reset CSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Body styling */
+body {
+    background-color: #f4f4f9;
+    color: #333;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Button container styling */
+.button-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 1000;
+}
+
+.home-button, .toggle-button {
+    padding: 10px 20px;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.home-button {
+    background-color: #007bff;
+}
+
+.home-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.toggle-button {
+    background-color: #28a745;
+}
+
+.toggle-button:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+/* Search bar styling */
+form {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    padding: 10px;
+    width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+input[type="text"]:focus {
+    border-color: #007bff;
+}
+
+button[type="submit"] {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+button[type="submit"]:hover {
+    background-color: #0056b3;
+}
+
+/* Chart container styling */
+.chart-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.chart-item {
+    width: 30%;
+    background-color: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s;
+}
+
+.chart-item:hover {
+    transform: scale(1.05);
+}
+
+/* Pagination styling */
+.pagination {
+    margin: 20px 0;
+    text-align: center;
+}
+
+.pagination a {
+    margin: 0 5px;
+    text-decoration: none;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    color: #007bff;
+    font-weight: bold;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination a:hover, .pagination a.active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .chart-item {
+        width: 80%;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-button, .toggle-button {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+
+    input[type="text"] {
+        width: 200px;
+    }
+}
+
+        </style>
+    </head>
+    <body>
+        <div style="padding: 20px;">
+            <!-- Container chứa các nút -->
+            <div class="button-container">
+                <!-- Nút chuyển đến trang home -->
+                <button class="home-button" onclick="window.location.href='/'">Trang chủ</button>
+    
+                <!-- Nút chuyển đổi giữa biểu đồ cột và sóng -->
+                <button class="toggle-button" id="toggleButton">Chuyển sang biểu đồ sóng</button>
+            </div>
+    
+            <!-- Thanh tìm kiếm -->
+            <form method="get" style="margin-bottom: 20px;">
+                <input type="text" name="q" value="{{ query }}" placeholder="Tìm kiếm tên tỉnh" style="padding: 5px; width: 300px;">
+                <button type="submit" style="padding: 5px;">Tìm kiếm</button>
+            </form>
+    
+            <!-- Biểu đồ -->
+            <div class="chart-container">
+                {% for item in page_obj %}
+                <div class="chart-item">
+                    <canvas id="chart-{{ forloop.counter }}"></canvas>
+                </div>
+                {% endfor %}
+            </div>
+    
+            <!-- Phân trang -->
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}&q={{ query }}">Previous</a>
+                {% endif %}
+    
+                {% for num in page_obj.paginator.page_range %}
+                    <a href="?page={{ num }}&q={{ query }}" class="{% if page_obj.number == num %}active{% endif %}">{{ num }}</a>
+                {% endfor %}
+    
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}&q={{ query }}">Next</a>
+                {% endif %}
+            </div>
+        </div>
+    
+        <!-- Script để render các biểu đồ -->
+        <script>
+            const chartData = JSON.parse('{{ chart_data|safe }}');
+    
+            // Danh sách màu sắc cho các biểu đồ
+            const colors = [
+                'rgba(255, 99, 132, 0.2)',  // Đỏ nhạt
+                'rgba(75, 192, 192, 0.2)',  // Xanh biển nhạt
+                'rgba(255, 206, 86, 0.2)',  // Vàng nhạt
+                'rgba(153, 102, 255, 0.2)', // Tím nhạt
+                'rgba(54, 162, 235, 0.2)',  // Xanh da trời nhạt
+                'rgba(255, 159, 64, 0.2)',  // Cam nhạt
+                'rgba(201, 203, 207, 0.2)'  // Xám nhạt
+            ];
+    
+            let chartType = 'bar';  // Mặc định là biểu đồ cột (bar)
+    
+            const charts = [];  // Mảng để lưu các biểu đồ
+    
+            // Hàm để render biểu đồ
+            function renderCharts() {
+                chartData.forEach((provinceData, index) => {
+                    const ctx = document.getElementById(`chart-${index + 1}`).getContext('2d');
+                    
+                    // Lấy màu sắc cho biểu đồ theo chỉ số index
+                    const backgroundColor = colors[index % colors.length];
+                    const borderColor = backgroundColor.replace('0.2', '1');  // Chỉnh màu viền đậm hơn
+                    
+                    if (charts[index]) {
+                        charts[index].destroy();  // Xóa biểu đồ cũ trước khi vẽ lại
+                    }
+    
+                    charts[index] = new Chart(ctx, {
+                        type: chartType,  // Loại biểu đồ (cột hoặc sóng)
+                        data: {
+                            labels: provinceData.years.map(y => y.year), // Năm
+                            datasets: [{
+                                label: `Độ ẩm của ${provinceData.province}`,
+                                data: provinceData.years.map(y => y.humidity), // Độ ẩm theo năm
+                                backgroundColor: backgroundColor,
+                                borderColor: borderColor,
+                                borderWidth: 2,  // Đặt độ dày của đường viền
+                                fill: chartType === 'line' ? false : true,  // Không tô màu dưới đường biểu đồ khi là line
+                                tension: chartType === 'line' ? 0.4 : 0  // Đảm bảo hiệu ứng sóng cho line
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: { title: { display: true, text: 'Năm' } },
+                                y: { title: { display: true, text: 'Độ ẩm (%)' } }
+                            }
+                        }
+                    });
+                });
+            }
+    
+            // Render biểu đồ ban đầu
+            renderCharts();
+    
+            // Xử lý sự kiện thay đổi kiểu biểu đồ khi nhấn nút
+            document.getElementById('toggleButton').addEventListener('click', () => {
+                chartType = chartType === 'bar' ? 'line' : 'bar';  // Chuyển đổi kiểu biểu đồ
+                const buttonText = chartType === 'bar' ? 'Chuyển sang biểu đồ sóng' : 'Chuyển sang biểu đồ cột';
+                document.getElementById('toggleButton').textContent = buttonText;
+                renderCharts();  // Vẽ lại các biểu đồ với kiểu mới
+            });
+        </script>
+    </body>
+    </html>
+    
